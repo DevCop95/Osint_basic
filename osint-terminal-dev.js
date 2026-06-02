@@ -73,6 +73,14 @@
   const previewVal    = (v,n=60) => { const s=String(v||"").trim().replace(/\s+/g," "); return s.length<=n?s:s.slice(0,n)+"…"; };
   const maskSecret    = (s)      => (s&&s.length>10)?s.slice(0,6)+"…"+s.slice(-4):"***";
 
+  const DUMMY_WORDS = ["example", "placeholder", "changeme", "null", "undefined", "true", "false", "your_", "insert", "replace", "dummy", "test"];
+  const isDummyValue = (v) => {
+    if (!v) return true;
+    const lower = String(v).toLowerCase();
+    if (lower === "null" || lower === "undefined" || lower === "true" || lower === "false" || lower === "0" || lower === "1") return true;
+    return DUMMY_WORDS.some(w => lower.includes(w));
+  };
+
   const rootHost = location.hostname.replace(/^www\./i,"");
 
   const getHost = (url) => { try{return new URL(url,location.href).hostname.replace(/^www\./i,"");}catch{return "";} };
@@ -590,8 +598,16 @@
       regex:/(?:sk|pk|rk)_(?:live|test)_[0-9A-Za-z]{24,}/g },
     { id:"SENDGRID",     label:"SendGrid Key",      keywords:["SG."],                               severity:4,
       regex:/SG\.[A-Za-z0-9_\-]{22}\.[A-Za-z0-9_\-]{43}/g },
+    { id:"TWILIO_KEY",   label:"Twilio Key",        keywords:["SK","AC"],                           severity:5,
+      regex:/(?:SK|AC)[0-9a-fA-F]{32}/g },
+    { id:"MAILCHIMP_KEY",label:"MailChimp Key",     keywords:["-us"],                               severity:4,
+      regex:/[0-9a-f]{32}-us[0-9]{1,2}/g },
+    { id:"TELEGRAM_BOT", label:"Telegram Bot Token",keywords:["bot"],                               severity:4,
+      regex:/[0-9]{9,10}:[a-zA-Z0-9_-]{35}/g },
+    { id:"GOOGLE_OAUTH", label:"Google OAuth ID",   keywords:["apps.googleusercontent.com"],        severity:4,
+      regex:/[0-9]+-[0-9a-zA-Z_]{32}\.apps\.googleusercontent\.com/g },
     { id:"PRIVATE_KEY",  label:"Private Key",       keywords:["BEGIN","PRIVATE KEY"],               severity:5,
-      regex:/-----BEGIN (?:RSA |EC |OPENSSH )?PRIVATE KEY-----/g },
+      regex:/-----BEGIN (?:RSA |EC |OPENSSH |DSA |PGP )?PRIVATE KEY-----/g },
     { id:"CSRF_TOKEN",   label:"CSRF Token",        keywords:["csrf","xsrf","_token"],              severity:3,
       regex:/(?:csrf|xsrf)[_\-]?token["'\s:=]+["']?([A-Za-z0-9\-_]{16,})/gi, cap:1 },
     { id:"SESSION_ID",   label:"Session ID",        keywords:["PHPSESSID","JSESSIONID","session_id"],severity:3,
@@ -605,7 +621,7 @@
   ];
 
   const HE_CONTEXT_RE  = /(?:token|key|secret|auth|password|credential|api|jwt|bearer|session|access|refresh|private|sign)/i;
-  const HE_FP_PATTERNS = [/^[0-9a-f]{32,64}$/i, /^[A-Z][A-Za-z]{20,}$/, /^[a-z]{24,}$/];
+  const HE_FP_PATTERNS = [/^[0-9a-f]{32,64}$/i, /^[A-Z][A-Za-z]{20,}$/, /^[a-z]{24,}$/, /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i];
 
   const keywordPreflight = (text,keywords) => {
     const l=text.toLowerCase();
@@ -626,6 +642,7 @@
           const raw=m[0], value=rule.cap?(m[rule.cap]||raw):raw;
           if(!value||value.length<8) continue;
           if(rule.excludeWords&&rule.excludeWords.some(w=>value.toLowerCase().includes(w))) continue;
+          if(isDummyValue(value)) continue;
           if(rule.entropyMin&&entropy(value)<rule.entropyMin) continue;
           const ev=addEvidence({
             type:rule.id, label:rule.label, severity:rule.severity,
@@ -769,6 +786,7 @@
       const eqIdx=tr.indexOf("=");
       const name= eqIdx===-1?tr:tr.slice(0,eqIdx);
       const value=eqIdx===-1?"":tr.slice(eqIdx+1);
+      if (isDummyValue(value) && value.length > 0) return;
       const risks=[];
       risks.push({flag:"HttpOnly",status:"MISSING",detail:"Visible in document.cookie → XSS stealable"});
       if(location.protocol==="http:") risks.push({flag:"Secure",status:"LIKELY_MISSING",detail:"HTTP page"});
@@ -830,6 +848,7 @@
       try {
         for(let i=0;i<store.length;i++){
           const key=store.key(i), value=store.getItem(key)||"";
+          if (isDummyValue(value)) continue;
           if(!INTERESTING_KEY_RE.test(key)&&!containsSecretValue(value)) continue;
           const jwtData=decodeJWT(value), ent=entropy(value);
           analyzeText(value,`${storeName}.${key}`,"storage:value");
@@ -926,6 +945,7 @@
           if(val===undefined||val===null||typeof val==="function") return;
           let str; try{str=JSON.stringify(val);}catch{return;}
           if(!str||str.length<5||str==="{}"||str==="[]") return;
+          if (isDummyValue(str)) return;
           if(!INTERESTING_KEY_RE.test(key)&&!containsSecretValue(str)) return;
           results.push({key,type:typeof val,preview:str.slice(0,120)});
           addEvidence({type:"WINDOW_GLOBAL",label:"Sensitive window global",severity:3,
@@ -989,6 +1009,7 @@
     if(/^\/\d+$/.test(p))                     return true;
     if((p.match(/\//g)||[]).length>8)          return true;
     if(/[A-Za-z0-9]{40,}/.test(p))            return true;
+    if(/\.(png|jpg|jpeg|gif|svg|ico|webp|css|woff|woff2|ttf|eot|mp4|webm|mp3|wav)$/i.test(p.split('?')[0])) return true;
     return false;
   };
 
