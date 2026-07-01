@@ -1,204 +1,245 @@
-# ⬡ OSINT Terminal v2 — README
+<div align="center">
 
-**Quick description**
-OSINT Terminal v2 is a lightweight JavaScript tray/terminal that you inject into a webpage (console/bookmarklet) to perform fast browser-based reconnaissance and analysis. It intercepts `fetch` and `XMLHttpRequest`, inspects DOM/meta/scripts, hunts for tokens (JWTs, API keys), persists findings to `IndexedDB`, and allows exporting results. Intended for authorized testing and internal audits only.
+<img src="https://img.shields.io/badge/version-2.0.0-00ff44?style=for-the-badge&logo=data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAyNCAyNCI+PHBhdGggZmlsbD0iIzAwZmY0NCIgZD0iTTEyIDJMMyAxOGgxOEwxMiAyem0wIDNsNi41IDExaC0xM0wxMiA1em0tMSA0djRoMlY5aC0yem0wIDZoMnYyaC0ydi0yeiIvPjwvc3ZnPg==" alt="version"/>
+<img src="https://img.shields.io/badge/type-bookmarklet-00aaff?style=for-the-badge&logo=javascript&logoColor=white" alt="type"/>
+<img src="https://img.shields.io/badge/license-MIT-ff6600?style=for-the-badge" alt="license"/>
+<img src="https://img.shields.io/badge/platform-browser-00ff44?style=for-the-badge&logo=googlechrome&logoColor=white" alt="platform"/>
+<img src="https://img.shields.io/badge/OWASP-aligned-red?style=for-the-badge&logo=owasp&logoColor=white" alt="owasp"/>
 
-> **IMPORTANT — legal & security**
-> Use this tool **only** on sites you own or where you have explicit permission to audit. Intercepting traffic or extracting credentials on third‑party sites without authorization can be illegal and dangerous. Do not publish found credentials.
+<br/><br/>
+
+```
+ ⬡  O S I N T   T E R M I N A L   v 2 . 0
+─────────────────────────────────────────────
+  passive recon · browser · no install
+```
+
+<img src="osint-terminal-preview.png" alt="OSINT Terminal v2.0 — interface preview" width="680"/>
+
+<br/>
+
+**A professional passive recon terminal injected directly into any webpage.**  
+Drop it. Scan it. Export it.
+
+<br/>
+
+[![OWASP WSTG](https://img.shields.io/badge/OWASP_WSTG-CLNT--12_·_SESS--02-red?style=flat-square)](https://owasp.org/www-project-web-security-testing-guide/)
+[![JWT4B](https://img.shields.io/badge/inspired_by-JWT4B_·_TruffleHog_·_LinkFinder-555?style=flat-square)](https://portswigger.net/bappstore/f923cbf91698420890354c1d8958fee6)
+[![SubDomainizer](https://img.shields.io/badge/inspired_by-SubDomainizer_·_Katana-555?style=flat-square)](https://github.com/nsonaniya2010/SubDomainizer)
+
+</div>
 
 ---
 
-## How to use (quick install)
+## ⚡ What is it?
 
-Paste the entire script you were given directly into the browser console (DevTools → Console) and press Enter. Alternatively, build a bookmarklet with the IIFE to inject in one click.
+**OSINT Terminal** is a single JavaScript file you inject into any webpage — via bookmarklet, browser console, or DevTools snippet — that spawns a floating terminal with passive recon capabilities aligned with OWASP WSTG standards.
 
-### Inject via console
+No extensions. No proxy. No backend. Pure browser JS.
 
-1. Open DevTools (F12 / Ctrl+Shift+I).
-2. Go to *Console*.
-3. Paste the complete script and press Enter.
-4. The terminal UI will appear at the bottom-right: `⬡ OSINT Terminal v2`.
-
-### Bookmarklet (one-click)
-
-Create a bookmark with the following as the URL:
-
-```text
-javascript:(() => { /* paste the whole IIFE body here */ })();
-```
-
-Clicking the bookmark injects the terminal into the current page.
+It intercepts `fetch`, `XMLHttpRequest`, `WebSocket`, and `postMessage` in real time, audits cookies and storage against OWASP criteria, decodes JWT tokens with JWT4B-style intelligence, extracts endpoints using LinkFinder-style analysis, identifies cloud assets like SubDomainizer, and detects secrets using TruffleHog-inspired keyword preflighting.
 
 ---
 
-## Requirements / Compatibility
+## 🖥️ Interface
 
-* Modern browser (Chrome, Edge, Firefox).
-* `fetch` / `XMLHttpRequest` and IndexedDB support.
-* In pages with very restrictive CSP or cross-origin iframes, deep scan and some overrides may fail.
-* No external dependencies required.
+The terminal renders as a **resizable, draggable floating panel** with three live tabs:
+
+| Tab | Content |
+|-----|---------|
+| **SCAN** | Progressive OSINT output — auth, cookies, storage, IndexedDB, JS analysis, service workers, security headers, GraphQL ops, session persistence, diff vs last scan |
+| **TRAFFIC** | Live request table — filterable by AUTH / TOKEN / COOKIE / WS / PM / ERROR. Click any row to expand full headers + body + response + related findings |
+| **FINDINGS** | All evidence sorted by severity — filterable by type (JWT, BEARER, CORS, CSP, GraphQL…). Click to expand decoded payload, location, requestIds |
 
 ---
 
-## Main commands (quick list)
+## 🚀 Quick Start
 
-Type these commands inside the terminal's input (the UI created by the script):
+### Option 1 — Browser Console
+Open DevTools (`F12`) → Console tab → paste the full content of `osint-terminal-v2.js` → `Enter`.
+
+### Option 2 — Bookmarklet
+```
+javascript:(function(){var s=document.createElement('script');s.src='https://YOUR_HOST/osint-terminal-v2.js';document.body.appendChild(s);})();
+```
+
+### Option 3 — Snippet (Chrome DevTools)
+1. DevTools → Sources → Snippets → New snippet
+2. Paste `osint-terminal-v2.js`
+3. `Ctrl+Enter` to run on any page
+
+---
+
+## 📋 Command Reference
 
 ```
-help         # Show commands list
-info         # Page basic info
-meta         # Meta tags and SEO
-links        # External links
-imgs         # Images with dimensions
-scripts      # Loaded scripts
-headings     # Headings structure
-forms        # Forms and fields
-emails       # Visible email addresses
-tech         # Detected technologies
-a11y         # Accessibility analysis
-scan         # Full scan (runs all scans)
-export       # Export page info (osint_<host>.json)
-cookies      # Show accessible cookies
-show-deep    # Token hunter: DOM/localStorage/sessionStorage
-net-on       # Enable network interceptor (fetch + XHR)
-net-off      # Disable network interceptor
-deep         # Deep script scan (token hunter)
-traffic      # View captured traffic (recent)
-inspect <i>  # Inspect request/response by index
-replay       # Replay last request (cloned)
-history      # Command history
-correlate    # Correlation engine (flags: AUTH, TOKEN, HEADER_AUTH)
-findings     # Summary of findings (tokens, endpoints, headers, JWTs)
-export-all   # Export traffic + findings → osint_pro.json
-clear        # Clear terminal
-exit         # Close UI
+❯ help                  Show all commands
+❯ scan                  Full OSINT surface scan (async, with diff on re-run)
+❯ traffic               Open TRAFFIC tab (live interactive table)
+❯ traffic on            Activate: fetch · XHR · WebSocket · postMessage
+❯ traffic off           Deactivate interceptor
+❯ traffic auth          Auth-focused view: Bearer / Cookie / Set-Cookie / correlation
+❯ traffic list          Quick list in SCAN tab
+❯ traffic last          Detail of last captured request
+❯ traffic <id>          Detail by request ID
+❯ findings              Open FINDINGS tab (filterable by type/severity)
+❯ findings high         HIGH severity findings in SCAN tab
+❯ findings <type>       jwt | bearer | cookie | cors | csp | ws | graphql | ...
+❯ export                Forensic JSON export (all categories, secrets masked)
+❯ clear                 Clear SCAN tab output
+❯ exit                  Close terminal
 ```
 
 ---
 
-## Example test case — paste and run (step-by-step)
+## 🔍 Feature Matrix
 
-Follow this typical test flow. You may paste lines one-by-one into the terminal input or run them sequentially.
+### Level A — Capture Vectors
 
-1. Enable the network interceptor and perform actions on the page:
+| Vector | Implementation | OWASP / Reference |
+|--------|---------------|-------------------|
+| **HTTP (fetch)** | `window.fetch` override — headers, body, response, status | WSTG-SESS-02 |
+| **HTTP (XHR)** | `XMLHttpRequest` override — `open`, `send`, `setRequestHeader`, `getResponseHeader` | WSTG-SESS-02 |
+| **WebSocket** | `window.WebSocket` override — message stream analysis, auth data detection | WSTG-CLNT-10 |
+| **postMessage** | Passive `window.message` listener — origin + data, sensitive payload detection | WSTG-CLNT-10 |
+| **Service Workers** | `getRegistrations()` — scope, state, script analysis, cache strategy detection | WSTG-CLNT-12 |
 
-```
-net-on
-```
+### Level B — Security Header Audit
 
-**Expected logs** (examples):
+| Header | Detection | Risk if Missing |
+|--------|-----------|----------------|
+| `Content-Security-Policy` | ✅ Present / absent + trusted host extraction | XSS, data exfiltration |
+| `Strict-Transport-Security` | ✅ Present / absent | Downgrade attacks |
+| `X-Frame-Options` | ✅ Present / absent | Clickjacking |
+| `X-Content-Type-Options` | ✅ Present / absent | MIME sniffing |
+| `Referrer-Policy` | ✅ Present / absent | Credential leakage |
+| `Permissions-Policy` | ✅ Present / absent | Feature abuse |
+| **CORS** `Access-Control-Allow-Origin` | ✅ Wildcard · reflect+creds detection | CORS misconfiguration |
 
-```
-🔥 NET INTERCEPTOR + ANALYSIS ACTIVATED
-── FETCH → GET ─────────────────────────────────────
-  URL: https://example.com/api/...
-  accept: application/json
-  ⚠ possible sensitive data in response
-  [JWT] (4) eyJhbGci...  // if a JWT is detected
-```
+### Level C — Client-Side Storage (OWASP WSTG-CLNT-12)
 
-2. Run a full page scan:
+| Storage | What's Analyzed |
+|---------|----------------|
+| **localStorage / sessionStorage** | Sensitive keys by regex, JWT decode, entropy scoring |
+| **IndexedDB** | `indexedDB.databases()` enumeration, object store scan, `CryptoKey extractable:true` detection |
+| **Cookies** | `document.cookie` — HttpOnly absence confirmed, `__Host-`/`__Secure-` prefix audit, risk scoring |
+| **Set-Cookie headers** | Full attribute parse from XHR traffic: Secure, HttpOnly, SameSite, Path, Domain, Max-Age |
+| **window globals** | iframe baseline technique — non-standard globals filtered against denylist |
 
-```
-scan
-```
+### Level D — Intelligence
 
-**Expected partial output**:
-
-```
-── INFO ─────────────────────────────────────────────
-  URL: https://example.com/path
-  Title: Example Site
-  Scripts: 12
-  Links: 34
-── META TAGS ───────────────────────────────────────
-  description: Example...
-  og:title: Example Site
-...
-```
-
-3. Hunt tokens in DOM/storage:
-
-```
-show-deep
-```
-
-**Output**:
-
-```
-TOKEN HUNTER
-  eyJ... (if a JWT is found)
-  Nothing found (if none)
-```
-
-4. View and correlate captured traffic:
-
-```
-traffic
-correlate
-```
-
-**Example**:
-
-```
-[0] POST https://example.com/api/login
-  headers: {"authorization":"Bearer eyJ..."}
-  ⚠ AUTH | TOKEN
-```
-
-5. Export everything locally:
-
-```
-export-all
-```
-
-Generates `osint_pro.json` containing tokens, endpoints, headers, decoded JWTs, and a recent slice of traffic.
+| Feature | Details |
+|---------|---------|
+| **JWT Intelligence** (JWT4B-style) | Header (`alg`, `typ`, `kid`) + payload (`sub`, `iss`, `aud`, `exp`, `iat`, `nbf`), expiry time, `alg:none` detection, RS256→HS256 confusion signal (CVE-2018-0114) |
+| **Secret Detection** (TruffleHog-style) | 14 rules with keyword preflighting, context-scored high-entropy generic, allowlist/denylist per rule, header vs body separation |
+| **Endpoint Discovery** (LinkFinder-style) | Regex over JS file content + FP filter (`lf_isFPPath`) for minified code artifacts |
+| **Cloud Asset Discovery** (SubDomainizer-style) | AWS S3, CloudFront, Azure Blob, GCP Storage, DigitalOcean Spaces |
+| **Subdomain Extraction** | From JS content — filtered against camelCase and digit-run FPs |
+| **GraphQL Inference** | Passive: extracts `query`/`mutation`/`subscription` + `operationName` from request bodies, no introspection |
+| **Scan Diff** | Each `scan` compares against previous — new findings, new endpoints, delta reporting |
+| **Session Persistence** | Snapshot on `traffic on`, detects tokens alive post-logout |
 
 ---
 
-## Detection technical notes
+## 🎯 Secret Detection Rules
 
-* **JWT detection**: Regex `eyJ[A-Za-z0-9\-_]+\.[A-Za-z0-9\-_]+\.[A-Za-z0-9\-_]+` — payload is base64-decoded and stored under `findings.jwt`.
-* **Rules**: Look for common patterns (AWS keys `AKIA...`, `api_key`, `Bearer <token>`, etc.). Also flag high-entropy strings (>=20 characters and entropy > 4.2).
-* **Persistence**: Uses `IndexedDB` store `osintDB_v2` with `traffic` and `findings` object stores.
-* **Interception**: Overrides `window.fetch` and `XMLHttpRequest` to record URL, headers, body, and responses (responses are cloned before reading).
+```
+JWT           eyJ[...].eyJ[...].sig              severity: HIGH
+Bearer        Bearer <token>                      severity: HIGH
+AWS Access    AKIA/ASIA/AROA/AIDA[0-9A-Z]{16}    severity: CRITICAL
+AWS Secret    aws_secret_key = <40-char>          severity: CRITICAL
+GitHub Token  ghp_/gho_/ghu_/ghs_ prefix         severity: CRITICAL
+Stripe Key    sk_live_ / pk_live_ prefix          severity: CRITICAL
+Private Key   -----BEGIN * PRIVATE KEY-----       severity: CRITICAL
+GCP API Key   AIza[0-9A-Za-z-_]{35}              severity: HIGH
+Slack Token   xox[baprs]-...-...                  severity: HIGH
+SendGrid      SG.[22].[43]                        severity: HIGH
+CSRF Token    csrf_token = <16+chars>             severity: MEDIUM
+Session ID    PHPSESSID / JSESSIONID              severity: MEDIUM
+API Key       api_key / x-api-key (entropy ≥3.5) severity: MEDIUM
+OAuth Token   access_token / refresh_token        severity: HIGH
+```
 
----
-
-## Security, privacy and limitations
-
-* **Sensitive data**: The script logs credentials and tokens into the UI and IndexedDB. Remove or redact sensitive data before sharing results.
-* **CORS / same-origin**: Cannot read cross-origin responses unless the server allows CORS.
-* **Risk**: Executing on third-party sites can cause data leakage — again: **only** use in authorized environments.
-* **No exfiltration by default**: The script does not transmit findings to external services; `export`/`export-all` produce local downloadable files. Review code if you need to change behavior.
-
----
-
-## Troubleshooting (common issues)
-
-* **UI not visible**: Check for script blockers, CSP rules, or that the IIFE was actually executed.
-* **`net-on` not capturing**: Pages using ServiceWorkers or WebSockets may bypass `fetch`/XHR overrides.
-* **IndexedDB open errors**: Try clearing site storage or testing in a new tab; some sandboxed contexts interfere with IndexedDB.
-* **Restore original `fetch`/XHR**: Run `net-off` or `exit`; if the page behaves strangely, reload it.
+All rules use **keyword preflighting** before regex — no regex is executed unless the keyword appears in the text first. High-entropy generic detection requires a context keyword within 80 characters.
 
 ---
 
-## Development & contribution notes
+## 📦 Export Structure
 
-* Recommended improvements: add more detection rules (OAuth codes, SAML assertions), integrate a headless/export-only mode for controlled pentests, or add richer correlation rules.
-* Keep the main script modular for testing and version control.
+`export` generates a forensic JSON with masked secrets:
+
+```json
+{
+  "meta": { "url", "title", "generatedAt", "tool", "trafficCaptured", "wsCaptured" },
+  "summary": { "total", "high", "medium", "low", "types" },
+  "auth": { "jwt", "bearers", "apiKeys", "sessions", "csrf", "oauth" },
+  "cookieAudit": [ { "name", "severity", "risks", "notes", "isJWT" } ],
+  "setCookieFromTraffic": [ { "name", "secure", "httpOnly", "sameSite", "risks" } ],
+  "securityHeaders": [ { "url", "found", "missing", "corsRisks" } ],
+  "corsIssues": [ { "url", "finding" } ],
+  "cspTrustedHosts": [ { "url", "hosts" } ],
+  "storage": [ { "store", "key", "isJWT", "entropy", "value (masked)" } ],
+  "indexedDB": [ { "db", "store", "preview" } ],
+  "windowGlobals": [ { "key", "preview" } ],
+  "serviceWorkers": [ { "scope", "state", "finding" } ],
+  "cloudAssets": [ { "type", "host", "source" } ],
+  "graphqlOps": [ { "type", "operationName", "query", "url" } ],
+  "websockets": [ { "id", "url", "status", "messageCount" } ],
+  "postMessages": [ { "id", "origin", "preview" } ],
+  "endpoints": { "dom", "traffic" },
+  "trafficSummary": [ { "id", "method", "url", "status", "flags" } ],
+  "evidence": [ { "id", "type", "label", "severity", "location", "sample (masked)", "firstSeen", "lastSeen", "count", "requestIds" } ]
+}
+```
 
 ---
 
-## License & credits
+## 🔬 Methodology & References
 
-* Add a license (MIT/Apache) if you plan to publish publicly.
-* Author: add your name or alias and any credits.
+This tool is designed as a **passive recon instrument** aligned with the following standards and tools:
+
+| Reference | Applied In |
+|-----------|-----------|
+| [OWASP WSTG-CLNT-12](https://owasp.org/www-project-web-security-testing-guide/latest/4-Web_Application_Security_Testing/11-Client-side_Testing/12-Testing_Browser_Storage) — Browser Storage | IndexedDB scan, window globals, localStorage/sessionStorage audit |
+| [OWASP WSTG-SESS-02](https://owasp.org/www-project-web-security-testing-guide/v42/4-Web_Application_Security_Testing/06-Session_Management_Testing/02-Testing_for_Cookies_Attributes) — Cookie Attributes | Cookie audit engine, Set-Cookie header parser |
+| [LinkFinder](https://github.com/GerbenJavado/LinkFinder) | JS content endpoint extraction with FP filter |
+| [SubDomainizer](https://github.com/nsonaniya2010/SubDomainizer) | Cloud asset patterns (S3, CloudFront, Azure, GCP, DO), subdomain extraction |
+| [TruffleHog Burp Extension](https://github.com/trufflesecurity/trufflehog-burp-suite-extension) | Keyword preflighting, header/body separation, context-scored HE detection |
+| [Secretlint WebExtension](https://github.com/secretlint/webextension) | Per-rule scoring, request/response split analysis |
+| [JWT4B (PortSwigger)](https://portswigger.net/bappstore/f923cbf91698420890354c1d8958fee6) | JWT header + payload decode, `alg:none`, CVE-2018-0114 signal |
+| [Session Handler+ (PortSwigger)](https://portswigger.net/bappstore/e4aa4cee811f43af96b2cd5e7e81598e) | Token lifecycle tracking, token→endpoint correlation |
+| [Katana (ProjectDiscovery)](https://github.com/projectdiscovery/katana) | Crawl surface philosophy — first-party priority, noisy third-party filtering |
 
 ---
 
-## Changelog (suggested)
+## ⚠️ Legal & Ethical Use
 
-* **v2** — Unified interceptor (fetch + XHR), high-entropy detection, persistent IndexedDB, export-all.
+> **This tool is intended for authorized security testing only.**
+>
+> Only use OSINT Terminal on applications you own or have explicit written permission to test. Unauthorized use may violate computer fraud laws in your jurisdiction. The authors assume no responsibility for misuse.
 
-*End of README — English version.*
+This is a **passive reconnaissance tool only**. It does not:
+- Replay or modify requests automatically
+- Perform active probes or fuzzing
+- Manipulate JWT signatures
+- Exfiltrate data to external servers
+
+All data stays in your browser session.
+
+---
+
+## 📄 License
+
+```
+MIT License — use freely, credit appreciated.
+```
+
+---
+
+<div align="center">
+
+**Built for security professionals, bug bounty hunters, and red teamers.**
+
+`inject` → `scan` → `traffic on` → `export`
+
+</div>
