@@ -146,10 +146,10 @@
   const box = el("div", {
     position:"fixed", bottom:"20px", right:"20px",
     width:"640px", height:"460px", minWidth:"400px", minHeight:"280px",
-    background:"#080808", border:"1px solid #00cc44",
+    background:"#08090D", border:"1px solid #1B8A93",
     zIndex:"999999999", display:"flex", flexDirection:"column",
-    fontFamily:"'Courier New',monospace", fontSize:"12px", color:"#00ff00",
-    boxShadow:"0 0 30px #00ff0022", borderRadius:"6px",
+    fontFamily:"'Courier New',monospace", fontSize:"12px", color:"#14B8C4",
+    boxShadow:"0 0 30px #22d3d922", borderRadius:"6px",
     boxSizing:"border-box"
   });
   box.id = "__osint_terminal_box";
@@ -157,9 +157,9 @@
   // ── Drag ────────────────────────────────────────────────────
   let drag=false, ox=0, oy=0;
   const header = el("div",{
-    padding:"5px 10px", borderBottom:"1px solid #1a3300",
+    padding:"5px 10px", borderBottom:"1px solid #123042",
     display:"flex", justifyContent:"space-between", alignItems:"center",
-    background:"#020d02", cursor:"move", userSelect:"none", flexShrink:"0"
+    background:"#070C14", cursor:"move", userSelect:"none", flexShrink:"0"
   });
   header.onmousedown = e => {
     if(e.button!==0) return;
@@ -183,7 +183,7 @@
     e.preventDefault();
   };
 
-  const titleEl  = el("span",{fontWeight:"bold",letterSpacing:"2px",color:"#00ff44",fontSize:"11px"},"⬡ OSINT Terminal v2.0");
+  const titleEl  = el("span",{fontWeight:"bold",letterSpacing:"2px",color:"#22D3D9",fontSize:"11px"},"⬡ OSINT Terminal v2.0");
   const controls = el("div", {display:"flex",gap:"6px",alignItems:"center"});
   const minBtn   = el("span",{cursor:"pointer",color:"#ffcc00",fontWeight:"bold",fontSize:"13px"},"─");
   const closeBtn = el("span",{cursor:"pointer",color:"#ff3333",fontWeight:"bold",fontSize:"13px"},"✕");
@@ -201,8 +201,8 @@
 
   // ── Status bar ────────────────────────────────────────────────
   const statusBar   = el("div",{
-    padding:"2px 10px", background:"#020d02",
-    borderBottom:"1px solid #0a1a0a", color:"#2a5a2a", fontSize:"11px",
+    padding:"2px 10px", background:"#070C14",
+    borderBottom:"1px solid #0C1B26", color:"#5C86A8", fontSize:"11px",
     display:"flex", justifyContent:"space-between", flexShrink:"0"
   });
   const statusLeft  = el("span",{},document.domain||location.hostname);
@@ -212,17 +212,17 @@
 
   // ── Tabs ──────────────────────────────────────────────────────
   const tabBar = el("div",{
-    display:"flex", background:"#020d02",
-    borderBottom:"1px solid #1a3300", flexShrink:"0"
+    display:"flex", background:"#070C14",
+    borderBottom:"1px solid #123042", flexShrink:"0"
   });
 
   const makeTab = (id, label) => {
     const t = el("div",{
       padding:"4px 14px", cursor:"pointer", fontSize:"11px",
       fontFamily:"'Courier New',monospace", userSelect:"none",
-      borderRight:"1px solid #1a3300",
-      color: id==="scan"?"#00ff44":"#2a5a2a",
-      borderBottom: id==="scan"?"2px solid #00ff44":"2px solid transparent",
+      borderRight:"1px solid #123042",
+      color: id==="scan"?"#22D3D9":"#5C86A8",
+      borderBottom: id==="scan"?"2px solid #22D3D9":"2px solid transparent",
       transition:"color 0.1s"
     }, label);
     t.dataset.tab = id;
@@ -262,8 +262,8 @@
     activeTab = id;
     Object.entries(tabsMap).forEach(([tid,tEl])=>{
       const active = tid===id;
-      tEl.style.color       = active?"#00ff44":"#2a5a2a";
-      tEl.style.borderBottom= active?"2px solid #00ff44":"2px solid transparent";
+      tEl.style.color       = active?"#22D3D9":"#5C86A8";
+      tEl.style.borderBottom= active?"2px solid #22D3D9":"2px solid transparent";
     });
     panelScan.style.display     = id==="scan"     ?"flex":"none";
     panelTraffic.style.display  = id==="traffic"  ?"flex":"none";
@@ -274,13 +274,13 @@
 
   // ── Input row ────────────────────────────────────────────────
   const inputRow = el("div",{
-    display:"flex", borderTop:"1px solid #1a3300",
+    display:"flex", borderTop:"1px solid #123042",
     padding:"4px 10px", alignItems:"center",
-    background:"#020d02", flexShrink:"0"
+    background:"#070C14", flexShrink:"0"
   });
-  const promptEl = el("span",{color:"#00ff00",marginRight:"6px",fontWeight:"bold"},"❯");
+  const promptEl = el("span",{color:"#14B8C4",marginRight:"6px",fontWeight:"bold"},"❯");
   const input    = el("input",{
-    flex:"1", background:"transparent", color:"#00ff44",
+    flex:"1", background:"transparent", color:"#22D3D9",
     border:"none", outline:"none",
     fontFamily:"'Courier New',monospace", fontSize:"12px"
   });
@@ -295,7 +295,7 @@
     background:"transparent", zIndex:"10"
   });
   // draw a small triangle indicator
-  resizeHandle.innerHTML = `<svg width="12" height="12" style="position:absolute;bottom:2px;right:2px;opacity:0.35"><polyline points="12,0 12,12 0,12" fill="none" stroke="#00ff44" stroke-width="1.5"/></svg>`;
+  resizeHandle.innerHTML = `<svg width="12" height="12" style="position:absolute;bottom:2px;right:2px;opacity:0.35"><polyline points="12,0 12,12 0,12" fill="none" stroke="#22D3D9" stroke-width="1.5"/></svg>`;
 
   const onResizeMove = e => {
     if (!resizeActive) return;
@@ -332,7 +332,7 @@
   // ═══════════════════════════════════════════════════════════
   // LOG HELPERS  (always write to SCAN panel)
   // ═══════════════════════════════════════════════════════════
-  const log = (text, color="#00ff00") => {
+  const log = (text, color="#14B8C4") => {
     const d = el("div",{color,wordBreak:"break-all",minHeight:"1em"},text);
     out.appendChild(d);
     out.scrollTop = out.scrollHeight;
@@ -363,14 +363,14 @@
     filters.forEach(f=>{
       const b = el("div",{
         padding:"2px 8px", cursor:"pointer", fontSize:"10px",
-        border:"1px solid #1a4400", borderRadius:"3px",
-        color: f==="ALL"?"#00ff44":"#2a5a2a",
+        border:"1px solid #164654", borderRadius:"3px",
+        color: f==="ALL"?"#22D3D9":"#5C86A8",
         background:"transparent", fontFamily:"'Courier New',monospace"
       },f);
       b.onclick=()=>{
         activeFilter=f;
-        Object.values(filterBtns).forEach(x=>{x.style.color="#2a5a2a";x.style.borderColor="#1a4400";});
-        b.style.color="#00ff44"; b.style.borderColor="#00ff44";
+        Object.values(filterBtns).forEach(x=>{x.style.color="#5C86A8";x.style.borderColor="#164654";});
+        b.style.color="#22D3D9"; b.style.borderColor="#22D3D9";
         renderRows();
       };
       filterBtns[f]=b;
@@ -402,7 +402,7 @@
       });
 
       if(!visible.length){
-        const e=el("div",{color:"#2a5a2a",padding:"8px"},"No traffic for filter: "+activeFilter);
+        const e=el("div",{color:"#5C86A8",padding:"8px"},"No traffic for filter: "+activeFilter);
         tableWrap.appendChild(e); return;
       }
 
@@ -413,7 +413,7 @@
         const method = item.method||(item._kind==="ws"?"WS":item._kind==="pm"?"PM":"");
         const row = el("div",{
           padding:"3px 4px", cursor:"pointer",
-          borderBottom:"1px solid #0a1a0a",
+          borderBottom:"1px solid #0C1B26",
           fontFamily:"'Courier New',monospace", fontSize:"11px"
         });
         row.appendChild(spanEl(`[${item.id}]`, {color:"#555", marginRight:"4px"}));
@@ -430,8 +430,8 @@
         };
         const detail = el("div",{
           display:"none",
-          background:"#030d03", padding:"6px 8px",
-          borderBottom:"1px solid #0a1a0a",
+          background:"#070C14", padding:"6px 8px",
+          borderBottom:"1px solid #0C1B26",
           color:"#0cf", fontSize:"11px", wordBreak:"break-all"
         });
         if(item._kind==="ws"||item._kind==="pm"){
@@ -458,7 +458,7 @@
 
     const all = [...evidenceStore.values()];
     if(!all.length){
-      const e=el("div",{color:"#2a5a2a",padding:"12px"},"No findings yet. Run scan or enable traffic on.");
+      const e=el("div",{color:"#5C86A8",padding:"12px"},"No findings yet. Run scan or enable traffic on.");
       panelFindings.appendChild(e); return;
     }
 
@@ -472,14 +472,14 @@
     const makeFilterBtn = (t) => {
       const b=el("div",{
         padding:"2px 7px",cursor:"pointer",fontSize:"10px",
-        border:`1px solid ${t==="ALL"?"#00ff44":"#1a4400"}`,borderRadius:"3px",
-        color: t===activeF?"#00ff44":"#2a5a2a",
+        border:`1px solid ${t==="ALL"?"#22D3D9":"#164654"}`,borderRadius:"3px",
+        color: t===activeF?"#22D3D9":"#5C86A8",
         background:"transparent",fontFamily:"'Courier New',monospace"
       },filterLabel(t));
       b.onclick=()=>{
         activeF=t;
-        Object.values(ftBtns).forEach(x=>{x.style.color="#2a5a2a";x.style.borderColor="#1a4400";});
-        b.style.color="#00ff44"; b.style.borderColor="#00ff44";
+        Object.values(ftBtns).forEach(x=>{x.style.color="#5C86A8";x.style.borderColor="#164654";});
+        b.style.color="#22D3D9"; b.style.borderColor="#22D3D9";
         renderFRows();
       };
       ftBtns[t]=b; return b;
@@ -509,7 +509,7 @@
         const sevColor = e.severity>=5?"#ff3333":e.severity===4?"#ff6600":e.severity===3?"#f90":"#555";
         const sevLabel = ["","LOW","LOW","MED","HIGH","CRIT"][Math.min(e.severity,5)]||"?";
         const row = el("div",{
-          padding:"3px 4px", borderBottom:"1px solid #0a1a0a",
+          padding:"3px 4px", borderBottom:"1px solid #0C1B26",
           cursor:"pointer", fontFamily:"'Courier New',monospace", fontSize:"11px"
         });
         row.appendChild(spanEl(sevLabel, {color:sevColor, minWidth:"38px", display:"inline-block"}));
@@ -518,8 +518,8 @@
 
         let expanded=false;
         const detail=el("div",{
-          display:"none",background:"#030d03",padding:"6px 8px",
-          borderBottom:"1px solid #0a1a0a",
+          display:"none",background:"#070C14",padding:"6px 8px",
+          borderBottom:"1px solid #0C1B26",
           color:"#0cf",fontSize:"11px",wordBreak:"break-all"
         });
         detail.textContent =
@@ -1670,8 +1670,8 @@
     }
 
     takeSnapshot();
-    log("🔥 Interceptor ON — fetch · XHR · WebSocket · postMessage","#00ff44");
-    log("  Note: Set-Cookie is a forbidden header — not readable via fetch or XHR, only in DevTools ▸ Network","#2a5a2a");
+    log("🔥 Interceptor ON — fetch · XHR · WebSocket · postMessage","#22D3D9");
+    log("  Note: Set-Cookie is a forbidden header — not readable via fetch or XHR, only in DevTools ▸ Network","#5C86A8");
   };
 
   const netOff = () => {
@@ -1710,12 +1710,12 @@
       jwtEv.slice(0,3).forEach(e=>{
         if(!e.jwt) return;
         jwtSummaryLines(e.jwt).forEach(line=>log(`    ${line.text}`,line.color));
-        log(`    @ ${previewVal(e.location,50)}`,"#2a5a2a");
+        log(`    @ ${previewVal(e.location,50)}`,"#5C86A8");
       });
     }
     bearerEv.slice(0,2).forEach(e=>{
       log(`  Bearer  ${previewVal(e.sample,50)}`,"#f90");
-      log(`          @ ${previewVal(e.location,50)}`,"#2a5a2a");
+      log(`          @ ${previewVal(e.location,50)}`,"#5C86A8");
     });
     if(!cookieAudit.length&&!storageRows.length&&!jwtEv.length&&!trafficTokens.length&&!windowGlobals.length)
       log("  No auth tokens — 'traffic on' then browse to capture live data","#555");
@@ -1724,7 +1724,7 @@
     sep("COOKIE AUDIT");
     if(!cookieAudit.length){
       log("  No JS-accessible cookies (all HttpOnly or none set)","#555");
-      log("  'traffic on' → Set-Cookie headers reveal Secure/SameSite/Path","#2a5a2a");
+      log("  'traffic on' → Set-Cookie headers reveal Secure/SameSite/Path","#5C86A8");
     } else {
       const HIGH=cookieAudit.filter(c=>c.severity==="HIGH");
       const MED =cookieAudit.filter(c=>c.severity==="MEDIUM");
@@ -1732,7 +1732,7 @@
       if(HIGH.length){ log(`  HIGH (${HIGH.length}): ${HIGH.map(c=>c.name+(c.isJWT?"[JWT]":"")).join(", ")}`,"#f00"); HIGH.forEach(c=>log(`    ${c.name} → ${c.risks.map(r=>r.flag+":"+r.status).join(" | ")}`,"#f90")); }
       if(MED.length)   log(`  MED  (${MED.length}): ${MED.map(c=>c.name).join(", ")} — HttpOnly missing`,"#f90");
       if(LOW.length)   log(`  LOW  (${LOW.length}): ${LOW.map(c=>c.name).join(", ")}`,"#555");
-      log("  All visible cookies lack HttpOnly","#2a5a2a");
+      log("  All visible cookies lack HttpOnly","#5C86A8");
     }
     if(setCookieLog.length){
       log(`  Set-Cookie from traffic (${setCookieLog.length}):`, "#0cf");
@@ -1918,14 +1918,14 @@
     const high=all.filter(e=>e.severity>=4), med=all.filter(e=>e.severity===3);
     if(!all.length){
       log("  No findings yet","#555");
-      log("  → 'traffic on' and browse the app to capture live data","#2a5a2a");
+      log("  → 'traffic on' and browse the app to capture live data","#5C86A8");
     } else {
       log(`  ${all.length} findings  ${high.length} HIGH  ${med.length} MED  ${all.length-high.length-med.length} LOW`,high.length?"#f00":"#f90");
       br();
-      high.slice(0,4).forEach(e=>{ log(`  ⚠ ${e.label}`,"#f90"); log(`    ${previewVal(e.sample,55)}`,"#f00"); log(`    @ ${previewVal(e.location,55)}`,"#2a5a2a"); });
+      high.slice(0,4).forEach(e=>{ log(`  ⚠ ${e.label}`,"#f90"); log(`    ${previewVal(e.sample,55)}`,"#f00"); log(`    @ ${previewVal(e.location,55)}`,"#5C86A8"); });
       br();
-      if(netInterceptor) log("  Interceptor ACTIVE — data grows as you browse","#2a5a2a");
-      else               log("  'traffic on' → live capture  |  TRAFFIC tab → full view  |  FINDINGS tab → filter","#2a5a2a");
+      if(netInterceptor) log("  Interceptor ACTIVE — data grows as you browse","#5C86A8");
+      else               log("  'traffic on' → live capture  |  TRAFFIC tab → full view  |  FINDINGS tab → filter","#5C86A8");
     }
 
     // save snapshot for next diff
@@ -1953,7 +1953,7 @@
     });
     if(wsTraffic.length) log(`  WebSocket sessions: ${wsTraffic.length}`,"#0cf");
     if(pmTraffic.length) log(`  postMessage events: ${pmTraffic.length}`,"#0cf");
-    log(`  Total: ${total} | → TRAFFIC tab for live view | 'traffic auth' | 'traffic <id>'`,"#2a5a2a");
+    log(`  Total: ${total} | → TRAFFIC tab for live view | 'traffic auth' | 'traffic <id>'`,"#5C86A8");
   };
 
   const showTrafficAuth = () => {
@@ -2008,7 +2008,7 @@
       errors.slice(0,4).forEach(t=>log(`    [${t.id}] ${t.method} ${truncUrl(t.url,55)} -> ${t.status??"ERR"}`,"#f00"));
     }
     br();
-    log("  Use 'traffic last' or 'traffic <id>' for full request detail","#2a5a2a");
+    log("  Use 'traffic last' or 'traffic <id>' for full request detail","#5C86A8");
     renderTrafficTab();
   };
 
@@ -2053,14 +2053,14 @@
       const high=all.filter(e=>e.severity>=4);
       sep("FINDINGS — HIGH");
       if(!high.length){ log("  No HIGH findings","#555"); return; }
-      high.forEach(e=>{ log(`  ⚠ ${e.label}`,"#f90"); log(`    ${previewVal(e.sample,60)}`,"#f00"); log(`    @ ${previewVal(e.location,60)}`,"#2a5a2a"); br(); });
+      high.forEach(e=>{ log(`  ⚠ ${e.label}`,"#f90"); log(`    ${previewVal(e.sample,60)}`,"#f00"); log(`    @ ${previewVal(e.location,60)}`,"#5C86A8"); br(); });
       return;
     }
     // filter by type keyword
     const byType=all.filter(e=>e.type.toLowerCase().includes(raw)||e.label.toLowerCase().includes(raw));
     if(!byType.length){ log(`  No findings matching "${raw}"  — try: high | jwt | cookie | bearer | cors | csp | ws | graphql`,"#555"); return; }
     sep(`FINDINGS — ${raw.toUpperCase()}`);
-    byType.forEach(e=>{ log(`  [${e.type}] ${previewVal(e.sample,60)}`,e.severity>=4?"#f00":"#f90"); log(`    @ ${previewVal(e.location,60)}`,"#2a5a2a"); });
+    byType.forEach(e=>{ log(`  [${e.type}] ${previewVal(e.sample,60)}`,e.severity>=4?"#f00":"#f90"); log(`    @ ${previewVal(e.location,60)}`,"#5C86A8"); });
   };
 
   // ═══════════════════════════════════════════════════════════
@@ -2161,8 +2161,8 @@
         ["exit",             "Close terminal"],
       ].forEach(([cmd,desc])=>{
         const row=el("div",{display:"flex",gap:"10px",marginBottom:"2px"});
-        row.appendChild(el("span",{color:"#00ff44",minWidth:"155px",fontWeight:"bold"},cmd));
-        row.appendChild(el("span",{color:"#2a5a2a"},desc));
+        row.appendChild(el("span",{color:"#22D3D9",minWidth:"155px",fontWeight:"bold"},cmd));
+        row.appendChild(el("span",{color:"#5C86A8"},desc));
         out.appendChild(row);
       });
     },
@@ -2184,7 +2184,7 @@
     const raw=input.value.trim(); if(!raw) return;
     cmdHistory.unshift(raw); if(cmdHistory.length>200) cmdHistory.pop(); histIdx=-1;
     const parts=raw.split(" "), command=parts[0].toLowerCase(), arg=parts.slice(1).join(" ");
-    log("❯ "+raw,"#1a3300");
+    log("❯ "+raw,"#123042");
     if(commands[command]){ try{commands[command](arg);}catch(err){log("  Error: "+String(err),"#f00");} }
     else log(`  Unknown: "${command}" — type help`,"#f00");
     input.value="";
@@ -2194,7 +2194,7 @@
   // ═══════════════════════════════════════════════════════════
   // BOOT
   // ═══════════════════════════════════════════════════════════
-  log("OSINT TERMINAL v2.0","#00ff44");
-  log("help | scan | traffic | traffic on | export","#1a4400");
-  log(location.hostname,"#2a5a2a");
+  log("OSINT TERMINAL v2.0","#22D3D9");
+  log("help | scan | traffic | traffic on | export","#164654");
+  log(location.hostname,"#5C86A8");
 })();
