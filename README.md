@@ -123,7 +123,7 @@ javascript:(function(){var s=document.createElement('script');s.src='https://YOU
 | **localStorage / sessionStorage** | Sensitive keys by regex, JWT decode, entropy scoring |
 | **IndexedDB** | `indexedDB.databases()` enumeration, object store scan, `CryptoKey extractable:true` detection |
 | **Cookies** | `document.cookie` — HttpOnly absence confirmed, `__Host-`/`__Secure-` prefix audit, risk scoring |
-| **Set-Cookie headers** | Full attribute parse from XHR traffic: Secure, HttpOnly, SameSite, Path, Domain, Max-Age |
+| **Set-Cookie headers** | Attribute parser (Secure, HttpOnly, SameSite, Path, Domain, Max-Age) — note: `Set-Cookie` is a forbidden response header and is never exposed to JS by `fetch` or `XMLHttpRequest` in any modern browser; check DevTools ▸ Network for real values |
 | **window globals** | iframe baseline technique — non-standard globals filtered against denylist |
 
 ### Level D — Intelligence
@@ -209,6 +209,17 @@ This tool is designed as a **passive recon instrument** aligned with the followi
 | [JWT4B (PortSwigger)](https://portswigger.net/bappstore/f923cbf91698420890354c1d8958fee6) | JWT header + payload decode, `alg:none`, CVE-2018-0114 signal |
 | [Session Handler+ (PortSwigger)](https://portswigger.net/bappstore/e4aa4cee811f43af96b2cd5e7e81598e) | Token lifecycle tracking, token→endpoint correlation |
 | [Katana (ProjectDiscovery)](https://github.com/projectdiscovery/katana) | Crawl surface philosophy — first-party priority, noisy third-party filtering |
+
+---
+
+## 🛠️ Recent Hardening
+
+- **Self-XSS fix**: TRAFFIC and FINDINGS rows no longer build DOM via `innerHTML` with page-controlled data (URLs, captured secrets) — rendered through safe `textContent` construction instead.
+- **`instanceof` preserved**: the `WebSocket` and `XMLHttpRequest` overrides now keep the original prototype chain, so `instanceof WebSocket` / `instanceof XMLHttpRequest` checks on the target page keep working.
+- **Safer XHR handling**: non-text `responseType` (`blob`, `arraybuffer`, `json`) no longer throws inside a swallowed try/catch and silently drops the request — it's now handled explicitly.
+- **`findings high` fixed**: now actually filters by severity ≥ HIGH (it previously filtered by an unrelated low-severity evidence type).
+- **Memory caps**: traffic, WebSocket, postMessage, evidence, GraphQL, and security-header logs are now capped to prevent unbounded growth during long recon sessions or chatty SPAs.
+- **Accurate docs**: `Set-Cookie` is a forbidden response header — it's never readable via `fetch` or `XMLHttpRequest` in any modern browser, only visible in DevTools ▸ Network.
 
 ---
 

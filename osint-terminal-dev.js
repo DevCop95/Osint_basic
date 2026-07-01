@@ -18,6 +18,20 @@
   const secHeaderLog   = [];   // { url, headers:{}, cors:{} }
   const graphqlOps     = [];   // inferred GraphQL ops from traffic
 
+  // Caps prevent unbounded memory growth during long recon sessions / chatty SPAs.
+  const MAX_TRAFFIC    = 500;
+  const MAX_WS         = 200;
+  const MAX_PM         = 500;
+  const MAX_WS_MSGS    = 200;
+  const MAX_SETCOOKIE  = 300;
+  const MAX_SECHEADERS = 300;
+  const MAX_GRAPHQL    = 300;
+  const MAX_EVIDENCE   = 5000;
+  const pushCapped = (arr, item, max) => {
+    arr.push(item);
+    if (arr.length > max) arr.splice(0, arr.length - max);
+  };
+
   let nextEvidenceId  = 1;
   let nextTrafficId   = 1;
   let histIdx         = -1;
@@ -47,6 +61,13 @@
     Object.assign(e.style, styles);
     if (text) e.textContent = text;
     return e;
+  };
+  // Always sets textContent (never innerHTML) — safe for untrusted values (URLs, captured secrets, etc).
+  const spanEl = (text, styles = {}) => {
+    const s = document.createElement("span");
+    Object.assign(s.style, styles);
+    s.textContent = text==null ? "" : String(text);
+    return s;
   };
   const nowIso = () => new Date().toISOString();
   const nowMs  = () => Date.now();
@@ -395,12 +416,11 @@
           borderBottom:"1px solid #0a1a0a",
           fontFamily:"'Courier New',monospace", fontSize:"11px"
         });
-        row.innerHTML =
-          `<span style="color:#555;margin-right:4px">[${item.id}]</span>`+
-          `<span style="color:${color};margin-right:5px">${status}</span>`+
-          `<span style="color:#2a6a2a;margin-right:5px">${method}</span>`+
-          `<span style="color:${color}">${previewVal(displayUrl(item.url||item.origin||"?"),62)}</span>`+
-          (flags?`<span style="color:#2a4a2a;font-size:10px;margin-left:6px">${flags}</span>`:"");
+        row.appendChild(spanEl(`[${item.id}]`, {color:"#555", marginRight:"4px"}));
+        row.appendChild(spanEl(status, {color, marginRight:"5px"}));
+        row.appendChild(spanEl(method, {color:"#2a6a2a", marginRight:"5px"}));
+        row.appendChild(spanEl(previewVal(displayUrl(item.url||item.origin||"?"),62), {color}));
+        if(flags) row.appendChild(spanEl(flags, {color:"#2a4a2a", fontSize:"10px", marginLeft:"6px"}));
 
         // expand on click
         let expanded=false;
@@ -442,18 +462,20 @@
       panelFindings.appendChild(e); return;
     }
 
-    // filter row
-    const types    = ["ALL",...new Set(all.map(e=>e.type))];
+    // filter row — "HIGH_SEV" is a synthetic filter (severity>=4), not a real evidence type
+    const typeList = [...new Set(all.map(e=>e.type))];
+    const filterOptions = ["ALL","HIGH_SEV",...typeList];
     let   activeF  = filterType||"ALL";
     const filterRow= el("div",{display:"flex",gap:"5px",marginBottom:"6px",flexWrap:"wrap",flexShrink:"0"});
     const ftBtns   = {};
+    const filterLabel = (t) => t==="HIGH_SEV" ? "HIGH" : t;
     const makeFilterBtn = (t) => {
       const b=el("div",{
         padding:"2px 7px",cursor:"pointer",fontSize:"10px",
         border:`1px solid ${t==="ALL"?"#00ff44":"#1a4400"}`,borderRadius:"3px",
         color: t===activeF?"#00ff44":"#2a5a2a",
         background:"transparent",fontFamily:"'Courier New',monospace"
-      },t);
+      },filterLabel(t));
       b.onclick=()=>{
         activeF=t;
         Object.values(ftBtns).forEach(x=>{x.style.color="#2a5a2a";x.style.borderColor="#1a4400";});
@@ -462,7 +484,7 @@
       };
       ftBtns[t]=b; return b;
     };
-    types.slice(0,10).forEach(t=>filterRow.appendChild(makeFilterBtn(t)));
+    filterOptions.slice(0,11).forEach(t=>filterRow.appendChild(makeFilterBtn(t)));
     panelFindings.appendChild(filterRow);
 
     // summary counts
@@ -479,7 +501,9 @@
 
     const renderFRows = () => {
       tableWrap.textContent="";
-      const visible = activeF==="ALL" ? all : all.filter(e=>e.type===activeF);
+      const visible = activeF==="ALL" ? all
+                    : activeF==="HIGH_SEV" ? all.filter(e=>e.severity>=4)
+                    : all.filter(e=>e.type===activeF);
       // sort by severity desc
       visible.sort((a,b)=>b.severity-a.severity).forEach(e=>{
         const sevColor = e.severity>=5?"#ff3333":e.severity===4?"#ff6600":e.severity===3?"#f90":"#555";
@@ -488,10 +512,9 @@
           padding:"3px 4px", borderBottom:"1px solid #0a1a0a",
           cursor:"pointer", fontFamily:"'Courier New',monospace", fontSize:"11px"
         });
-        row.innerHTML=
-          `<span style="color:${sevColor};min-width:38px;display:inline-block">${sevLabel}</span>`+
-          `<span style="color:#0cf;margin-right:5px">${e.type}</span>`+
-          `<span style="color:#2a6a2a">${previewVal(e.sample,52)}</span>`;
+        row.appendChild(spanEl(sevLabel, {color:sevColor, minWidth:"38px", display:"inline-block"}));
+        row.appendChild(spanEl(e.type, {color:"#0cf", marginRight:"5px"}));
+        row.appendChild(spanEl(previewVal(e.sample,52), {color:"#2a6a2a"}));
 
         let expanded=false;
         const detail=el("div",{
@@ -541,6 +564,8 @@
       jwt:null
     };
     evidenceStore.set(key,item);
+    // evict oldest (Map preserves insertion order) once over the cap
+    if(evidenceStore.size>MAX_EVIDENCE) evidenceStore.delete(evidenceStore.keys().next().value);
     // refresh findings tab badge
     updateTabBadge();
     return item;
@@ -760,7 +785,7 @@
     }
 
     const entry={url,found,missing:missing.filter(h=>critical.includes(h)),corsRisks};
-    if(!secHeaderLog.some(e=>e.url===url)) secHeaderLog.push(entry);
+    if(!secHeaderLog.some(e=>e.url===url)) pushCapped(secHeaderLog,entry,MAX_SECHEADERS);
     return entry;
   };
 
@@ -779,7 +804,7 @@
           const type = /^\s*mutation/i.test(q)?"mutation":/^\s*subscription/i.test(q)?"subscription":"query";
           const entry={type,operationName:op||"(anonymous)",query:q.slice(0,300),url,requestId,time:nowMs()};
           if(!graphqlOps.some(e=>e.operationName===entry.operationName&&e.type===type)){
-            graphqlOps.push(entry);
+            pushCapped(graphqlOps,entry,MAX_GRAPHQL);
             addEvidence({
               type:"GRAPHQL_OP", label:`GraphQL ${type}`, severity:2,
               source:url, location:"body:request", field:op||type,
@@ -1491,7 +1516,7 @@
     // Set-Cookie
     setCookieHdrs.forEach(hdr=>{
       const parsed=parseSetCookieHeader(hdr,record.url,record.id);
-      if(parsed) setCookieLog.push(parsed);
+      if(parsed) pushCapped(setCookieLog,parsed,MAX_SETCOOKIE);
     });
     // update traffic tab badge
     tabTraffic.textContent=`TRAFFIC (${traffic.length+wsTraffic.length+pmTraffic.length})`;
@@ -1519,7 +1544,7 @@
       const method=(opts.method||"GET").toUpperCase();
       const headers=normalizeHeaders(opts.headers);
       const record=createTrafficRecord({url:String(url),method,headers,body:opts.body||null,kind:"fetch"});
-      traffic.push(record);
+      pushCapped(traffic,record,MAX_TRAFFIC);
       Object.entries(headers).forEach(([k,v])=>analyzeText(String(v),String(url),"header:request",record.id));
       try {
         const res=await originalFetch(...args);
@@ -1555,19 +1580,22 @@
       };
       xhr.send=function(body){
         record=createTrafficRecord({url,method,headers:{...reqHeaders},body,kind:"xhr"});
-        traffic.push(record);
+        pushCapped(traffic,record,MAX_TRAFFIC);
         this.addEventListener("load",function(){
           try {
-            const text=this.responseText;
-            const sc=this.getResponseHeader("set-cookie");
-            const setCookies=sc?[sc]:[];
+            // responseText throws a DOMException unless responseType is "" or "text" — guard it.
+            const isTextual=this.responseType===""||this.responseType==="text";
+            const text=isTextual?this.responseText:`[non-text response: ${this.responseType||"?"}]`;
             const respHeaders={};
-            ["content-type","content-security-policy","strict-transport-security",
-             "x-frame-options","access-control-allow-origin","access-control-allow-credentials"].forEach(h=>{
-              const v=this.getResponseHeader(h); if(v) respHeaders[h]=v;
+            (this.getAllResponseHeaders()||"").split(/\r?\n/).forEach(line=>{
+              const idx=line.indexOf(":");
+              if(idx===-1) return;
+              const k=line.slice(0,idx).trim().toLowerCase(), v=line.slice(idx+1).trim();
+              if(k) respHeaders[k]=v;
             });
+            // Set-Cookie is a forbidden response header — never exposed to JS via fetch or XHR, in any browser.
             finalizeTrafficRecord(record,{status:this.status,response:text});
-            processTrafficResponse(record,text,respHeaders,setCookies);
+            processTrafficResponse(record,isTextual?text:"",respHeaders,[]);
             const flags=summarizeTrafficFlags(record);
             const color=flags.includes("HEADER_AUTH")?"#f90":"#0cf";
             log(`  [${record.id}] ${record.method} ${displayUrl(url)} → ${this.status}`,color);
@@ -1581,6 +1609,9 @@
       };
       return xhr;
     };
+    // preserve prototype chain so `instanceof XMLHttpRequest` still works on the page
+    window.XMLHttpRequest.prototype = OriginalXHR.prototype;
+    try{ Object.setPrototypeOf(window.XMLHttpRequest,OriginalXHR); }catch(e){}
 
     // ── WebSocket override (Level A — new) ──────────────────
     window.WebSocket = function(url,...args){
@@ -1590,15 +1621,14 @@
         time:nowMs(), method:"WS", headers:{}, status:"open",
         messages:[], data:"", error:null
       };
-      wsTraffic.push(wsEntry);
+      pushCapped(wsTraffic,wsEntry,MAX_WS);
       tabTraffic.textContent=`TRAFFIC (${traffic.length+wsTraffic.length+pmTraffic.length})`;
       log(`  [WS:${wsEntry.id}] WebSocket → ${previewVal(String(url),60)}`,"#0cf");
 
-      const origOnMessage = ws.onmessage;
       ws.addEventListener("message",ev=>{
         try {
           const data=typeof ev.data==="string"?ev.data:JSON.stringify(ev.data);
-          wsEntry.messages.push({t:nowMs(),data:data.slice(0,500)});
+          pushCapped(wsEntry.messages,{t:nowMs(),data:data.slice(0,500)},MAX_WS_MSGS);
           wsEntry.data=data.slice(0,500);
           analyzeText(data,String(url),"ws:message",wsEntry.id);
           if(data.includes("token")||data.includes("jwt")||data.includes("Bearer"))
@@ -1609,7 +1639,8 @@
       ws.addEventListener("error",()=>{ wsEntry.status="error"; wsEntry.error="WS error"; });
       return ws;
     };
-    // preserve static properties
+    // preserve prototype chain (instanceof WebSocket) + static properties (CONNECTING, OPEN, ...)
+    window.WebSocket.prototype = OriginalWS.prototype;
     try{ Object.setPrototypeOf(window.WebSocket,OriginalWS); }catch(e){}
 
     // ── postMessage monitor (Level A — new) ─────────────────
@@ -1623,7 +1654,7 @@
             origin:ev.origin||"null", data:data.slice(0,400),
             time:nowMs(), method:"PM", headers:{}, status:"received"
           };
-          pmTraffic.push(pmEntry);
+          pushCapped(pmTraffic,pmEntry,MAX_PM);
           tabTraffic.textContent=`TRAFFIC (${traffic.length+wsTraffic.length+pmTraffic.length})`;
           analyzeText(data,ev.origin||"null","postMessage:data",pmEntry.id);
           if(containsSecretValue(data)||INTERESTING_KEY_RE.test(data)){
@@ -1640,7 +1671,7 @@
 
     takeSnapshot();
     log("🔥 Interceptor ON — fetch · XHR · WebSocket · postMessage","#00ff44");
-    log("  Note: Set-Cookie forbidden in Fetch API — visible in XHR + DevTools","#2a5a2a");
+    log("  Note: Set-Cookie is a forbidden header — not readable via fetch or XHR, only in DevTools ▸ Network","#2a5a2a");
   };
 
   const netOff = () => {
@@ -2018,7 +2049,7 @@
     }
     // filter by severity keyword
     if(raw==="high"||raw==="crit"){
-      switchTab("findings"); renderFindingsTab("HIGH_ENTROPY"); // switch to tab then filter
+      switchTab("findings"); renderFindingsTab("HIGH_SEV"); // switch to tab, filter by severity>=4
       const high=all.filter(e=>e.severity>=4);
       sep("FINDINGS — HIGH");
       if(!high.length){ log("  No HIGH findings","#555"); return; }
@@ -2167,4 +2198,3 @@
   log("help | scan | traffic | traffic on | export","#1a4400");
   log(location.hostname,"#2a5a2a");
 })();
-undefined
